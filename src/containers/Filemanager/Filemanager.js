@@ -15,6 +15,7 @@ class Filemanager extends Component {
     this.state = {
       loading: false,                     // state for await response from server
       error: null,                        // error message
+      path: '/',
       files: [],                          // list of files and folders
       createFolder: false,                // open dialog for enter new folder name
       selected: -1,                       // current item selected
@@ -37,7 +38,33 @@ class Filemanager extends Component {
   }
 
   componentDidMount() {
-    fetch(dirUrl)
+    const options = {
+      type: 'POST',
+      data: { path: this.state.path },
+    };
+    fetch(dirUrl, options)
+      .then(response => {
+        return response.json();
+      })
+      .then(json => {
+        this.setState(() => {
+          return {
+            files: sortFiles(json.data),
+          };
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }
+
+  // fetch metadata from server
+  fetchMetadata(path) {
+    const options = {
+      type: 'POST',
+      data: { path },
+    };
+    fetch(dirUrl, options)
       .then(response => {
         return response.json();
       })
