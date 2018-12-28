@@ -1,0 +1,33 @@
+.InputContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.Input {
+  color: rgba(0, 0, 0, 0.87);
+  border: 1px solid rgba(0, 0, 0, 0.54);
+  border-radius: 4px;
+  display: -ms-flexbox;
+  display: flex;
+  padding: 12px 16px 14px;
+  background-color: transparent;
+  z-index: 1;
+}
+
+.Input:focus,
+.Input:active {
+  outline: none;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.54);
+}
+
+.InputLabel {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.error {
+  display: block;
+  color: red;
+  font-size: 10px;
+  min-height: 24px;
+}

@@ -1,0 +1,19 @@
+.Filelist_Header {
+  display: table-header-group;
+  vertical-align: middle;
+  border-color: inherit;
+}
+
+.Filelist_Header_Cell {
+  background: #e9effd;
+  font-size: 14px;
+  font-family: 'Roboto Medium', 'Open Sans', Arial, Helvetica, sans-serif;
+  font-weight: 500;
+  line-height: 1.2;
+  vertical-align: top;
+  padding: 14px;
+  border-top: 0;
+  border-bottom: 4px solid #dee6f9;
+  text-align: left;
+  box-sizing: border-box;
+}

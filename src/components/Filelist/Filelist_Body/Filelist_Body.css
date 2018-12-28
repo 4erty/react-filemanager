@@ -1,0 +1,7 @@
+.Filelist_Body {
+  box-sizing: border-box;
+  display: table-row-group;
+  vertical-align: middle;
+  border-color: inherit;
+}
+
