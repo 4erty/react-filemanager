@@ -3,18 +3,21 @@ import style from './Filelist_Body.css';
 
 import FilelistRow from './Filelist_Row/Filelist_Row';
 
-const selectRow = (event) => {
-  event.currentTarget.classList.toggle('selected');
-};
-
-const FilelistBody = (props) => {
+const FilelistBody = ({
+  files,
+  select,
+  selected,
+  context,
+}) => {
   let list = null;
-  if (Array.isArray(props.files)) {
-    list = props.files.map((file, index) => (
+  if (Array.isArray(files)) {
+    list = files.map((file, index) => (
       <FilelistRow
         key={index}
         file={file}
-        selectRow={selectRow}
+        select={select}
+        selected={index === selected}
+        context={context}
       />
     ));
   }

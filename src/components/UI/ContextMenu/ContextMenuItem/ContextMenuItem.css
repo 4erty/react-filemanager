@@ -1,0 +1,20 @@
+.ContextMenuItem {
+  cursor: pointer;
+
+  display: block;
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 6px 18px;
+}
+
+.ContextMenuItem:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.ContextMenuLink {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.ContextMenuLink_disabled {
+  color: rgba(0, 0, 0, 0.54);
+}

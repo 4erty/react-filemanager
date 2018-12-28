@@ -10,13 +10,17 @@ import FilePdf from '../../../SVG/Icons/FilePdf/FilePdf';
 
 const FilelistRow = (props) => {
   const file = props.file;
+  const selectRow = () => props.select(file);
+  const contextMenu = (event) => props.context(event, file);
+  const classes = [styles.Filelist_Row];
+  if (props.selected) classes.push(styles.selected);
   let icon = <FileRegular width='16px' height='16px' />;
   if (file.directory === true) icon = <FolderSolid width='16px' height='16px' color='rgb(236, 218, 130)'/>;
   if (file.mimeType && file.mimeType.indexOf('image') !== -1) icon = <FileImage width='16px' height='16px' />;
   if (file.mimeType && file.mimeType === 'application/pdf') icon = <FilePdf width='16px' height='16px' />;
 
   return (
-    <tr className={styles.Filelist_Row} onClick={props.selectRow}>
+    <tr className={classes.join(' ')} onClick={selectRow} onContextMenu={contextMenu}>
       <td className={styles.Filelist_Row_Cell}>
         <div className={file.directory === true ? styles.dir : styles.file}>
           {icon}

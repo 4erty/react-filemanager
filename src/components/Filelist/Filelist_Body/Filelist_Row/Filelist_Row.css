@@ -7,6 +7,8 @@
 .Filelist_Row_Cell {
   box-sizing: border-box;
   color: rgba(67, 67, 72, 1);
+  font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
   padding: 10px 14px;
   line-height: 1.42857143;
   vertical-align: top;
@@ -36,5 +38,12 @@
 
 .selected {
   background: #337ab7;
+  color: #fff;
+}
+
+.selected .dir,
+.selected .file,
+.selected .dir > svg,
+.selected .file > svg {
   color: #fff;
 }

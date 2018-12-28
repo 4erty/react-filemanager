@@ -4,9 +4,12 @@ import styles from './FilemanagerControls.css';
 import ControlButtons from './ControlButtons/ControlButtons';
 import ControlPath from './ControlPath/ControlPath';
 
-const FilemanagerControls = (props)=>(
+const FilemanagerControls = ({ createFolder, upload })=>(
   <div className={styles.FilemanagerControls}>
-    <ControlButtons createFolder={props.createFolder}/>
+    <ControlButtons
+      createFolder={createFolder}
+      upload={upload}
+    />
     <ControlPath />
   </div>
 );

@@ -13,12 +13,15 @@ class Filelist extends Component {
   }
 
   render() {
-    const dirs = this.props.files.filter(el=>el.directory === true).sort(sort);
-    const files = this.props.files.filter(el=>el.directory !== true).sort(sort);
     return (
       <table className={styles.Filelist}>
         <FilelistHeader headers={h}/>
-        <FilelistBody files={dirs.concat(files)}/>
+        <FilelistBody
+          files={this.props.files}
+          select={this.props.select}
+          selected={this.props.selected}
+          context={this.props.context}
+        />
       </table>
     );
   }

@@ -32,3 +32,13 @@ export const formatFilsize = (size) => {
   res = Math.round(size / (1000 ** rank) * 10) / 10 + ' ' + bytes[rank];
   return res;
 };
+
+const sort = (a, b) => a.name > b.name ? 1 : -1;
+
+export const sortFiles = (files) => {
+  if (!Array.isArray(files)) return [];
+  const list = [...files];
+  const dirs = list.filter(el=>el.directory === true).sort(sort);
+  const filesList = list.filter(el=>el.directory !== true).sort(sort);
+  return dirs.concat(filesList);
+};
