@@ -69,10 +69,11 @@ module.exports = {
     hot: false,
     hotOnly: false,
     before: (app, server) => {
-      app.get('/resources/api/directory/metadata', (req, res) => {
+      app.post('/resources/api/directory/metadata', (req, res) => {
+        console.log(req.body);
         res.json(dirs);
       });
-      app.get('/resources/api/directory/create', (req, res) => {
+      app.post('/resources/api/directory/create', (req, res) => {
         res.json({ code: 'OK' });
       });
     },

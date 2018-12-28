@@ -24,6 +24,7 @@ class Filemanager extends Component {
       contextCoord: {},
     };
     // methods
+    this.fetchMetadata = this.fetchMetadata.bind(this);
     this.contextMenu = this.contextMenu.bind(this);
     this.selectItem = this.selectItem.bind(this);
     this.createFolderModal = this.createFolderModal.bind(this);
@@ -38,32 +39,21 @@ class Filemanager extends Component {
   }
 
   componentDidMount() {
-    const options = {
-      type: 'POST',
-      data: { path: this.state.path },
-    };
-    fetch(dirUrl, options)
-      .then(response => {
-        return response.json();
-      })
-      .then(json => {
-        this.setState(() => {
-          return {
-            files: sortFiles(json.data),
-          };
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      });
+    this.fetchMetadata(this.state.path);
   }
 
   // fetch metadata from server
   fetchMetadata(path) {
+    let headers = new Headers();
+    headers.append('Content-Type', 'application/x-www-form-urlencoded');
+
     const options = {
-      type: 'POST',
+      crossDomain: true,
+      headers,
+      method: 'POST',
       data: { path },
     };
+
     fetch(dirUrl, options)
       .then(response => {
         return response.json();
