@@ -53,6 +53,7 @@ module.exports = {
     usedExports: true,
   },
   devServer: {
+    open: false,
     contentBase: path.join(__dirname, 'public/'),
     compress: true,
     watchContentBase: true,

@@ -18,7 +18,7 @@ class Filemanager extends Component {
       path: '/',
       files: [],                          // list of files and folders
       createFolder: false,                // open dialog for enter new folder name
-      selected: -1,                       // current item selected
+      selected: [],                       // current item selected
       openContext: false,
       contextMenu: contextMenu,
       contextCoord: {},
@@ -101,11 +101,13 @@ class Filemanager extends Component {
   }
 
   // select file or folder
-  selectItem(item) {
+  selectItem(event, item) {
+    const ctrl = event.ctrlKey;
+    console.log(ctrl);
     const files = [...this.state.files];
     let index = files.findIndex(el => el === item);
-    if (this.state.selected === index) index = -1;
-    this.setState({ selected: index });
+    if (this.state.selected[0] === index) index = [];
+    this.setState({ selected: [index] });
   }
 
   // open file or folder

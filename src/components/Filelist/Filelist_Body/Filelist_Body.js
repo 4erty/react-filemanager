@@ -16,7 +16,7 @@ const FilelistBody = ({
         key={index}
         file={file}
         select={select}
-        selected={index === selected}
+        selected={selected.indexOf(index) !== -1}
         context={context}
       />
     ));

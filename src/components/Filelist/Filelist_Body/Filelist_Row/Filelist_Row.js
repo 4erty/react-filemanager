@@ -10,7 +10,7 @@ import FilePdf from '../../../SVG/Icons/FilePdf/FilePdf';
 
 const FilelistRow = (props) => {
   const file = props.file;
-  const selectRow = () => props.select(file);
+  const selectRow = (event) => props.select(event, file);
   const contextMenu = (event) => props.context(event, file);
   const classes = [styles.Filelist_Row];
   if (props.selected) classes.push(styles.selected);
