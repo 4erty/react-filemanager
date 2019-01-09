@@ -1,30 +1,50 @@
 import React, { Component } from 'react';
 import styles from './Filemanager.css';
 import { dirUrl, uploadUrl, contextMenu } from './config';
-import { sortFiles } from '../../utils/utils';
+import { sortFiles, clearSelection } from '../../utils/utils';
 
 import Filelist from '../../components/Filelist/Filelist';
 import FilemanagerControls from '../../components/FilemanagerControls/FilemanagerControls';
 import Dialog from '../../components/UI/Dialog/Dialog';
 import ContextMenu from '../../components/UI/ContextMenu/ContextMenu';
+import FancyBox from '../../components/Fancybox/Fancybox';
 
 class Filemanager extends Component {
   constructor(props) {
+    /**
+     * @constructor
+     * @param {boolean} loading - fetching state
+     * @param {string} error - error message
+     * @param {string} path - relate path to files on server
+     * @param {Array} files - list of files and folders
+     * @param {boolean} createFolder - open dialog for enter new folder name
+     * @param {Array} selected - array of indexes of selected files/folders
+     * @param {boolean} openContext - open context menu
+     * @param {contextMenu} contextMenu - context menu config object
+     * @param {Object} contextCoord - coordinates of context menu on screen
+     * @param {boolean} openFancy - open fancy slider
+     * @param {number} opened - index of current file opend on fancy slider
+     * @param {Array} from - array of indexes of copied files/folders
+     */
     super(props);
     // state
     this.state = {
-      loading: false,                     // state for await response from server
-      error: null,                        // error message
+      loading: false,
+      error: null,
       path: '/',
-      files: [],                          // list of files and folders
-      createFolder: false,                // open dialog for enter new folder name
-      selected: [],                       // current item selected
+      files: [],
+      createFolder: false,
+      selected: [],
       openContext: false,
       contextMenu: contextMenu,
       contextCoord: {},
+      openFancy: false,
+      opened: -1,
+      from: [],
     };
     // methods
-    this.fetchMetadata = this.fetchMetadata.bind(this);
+    this.fetchData = this.fetchData.bind(this);
+    this.dubleClickHandler = this.dubleClickHandler.bind(this);
     this.contextMenu = this.contextMenu.bind(this);
     this.selectItem = this.selectItem.bind(this);
     this.createFolderModal = this.createFolderModal.bind(this);
@@ -32,6 +52,8 @@ class Filemanager extends Component {
     this.closeModal = this.closeModal.bind(this);
     this.contextMenuHide = this.contextMenuHide.bind(this);
     this.openFile = this.openFile.bind(this);
+    this.copyFiles = this.copyFiles.bind(this);
+    this.pasteFiles = this.pasteFiles.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.saveFile = this.saveFile.bind(this);
     this.copyUrl = this.copyUrl.bind(this);
@@ -39,41 +61,82 @@ class Filemanager extends Component {
   }
 
   componentDidMount() {
-    this.fetchMetadata(this.state.path);
+    this.fetchData(
+      dirUrl,
+      { path: this.state.path },
+      (json) => this.setState({ files: sortFiles(json.data) }),
+    );
   }
 
-  // fetch metadata from server
-  fetchMetadata(path) {
-    let headers = new Headers();
-    headers.append('Content-Type', 'application/x-www-form-urlencoded');
-
+  /**
+   * fetch POST request from server.
+   * @param {string} url - url to fetch
+   * @param {object} data - body of request.
+   * @param {function} callback - callback after parse request
+   */
+  fetchData(url, data, callback) {
     const options = {
-      crossDomain: true,
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       method: 'POST',
-      data: { path },
+      body: JSON.stringify(data),
     };
 
-    fetch(dirUrl, options)
+    fetch(url, options)
       .then(response => {
         return response.json();
       })
       .then(json => {
-        this.setState(() => {
-          return {
-            files: sortFiles(json.data),
-          };
-        });
+        if (typeof callback === 'function') callback(json);
       })
       .catch(err => {
         console.log(err);
       });
   }
 
-  // open context menu
+  // open fancy box
+  dubleClickHandler(event, file) {
+    // if clicked on directory
+    if (file.directory === true) {
+      console.log(file);
+      this.changeDir(file.path);
+    } else {
+      const opened = this.state.files.findIndex(el => file === el);
+      this.setState({ openFancy: true, opened });
+    }
+    clearSelection();
+    console.log(file);
+  }
+
+  // change directory path
+  changeDir(path) {
+    const backDir = {
+      path: this.state.path,
+      name: '...',
+      directory: true,
+    };
+    const callback = (json) => {
+      const files = path !== '/' ? [backDir, ...sortFiles(json.data)] : sortFiles(json.data);
+      this.setState({ files });
+    };
+
+    this.setState({ path }, this.fetchData(
+      dirUrl,
+      { path },
+      callback,
+    ));
+  }
+
+  /**
+   * open context menu.
+   * @param {Event} event - onContextMenu event object
+   * @param {object} file - file object.
+   */
   contextMenu(event, file) {
     event.preventDefault();
     const menu = { ...this.state.contextMenu };
+    const index = this.state.files.findIndex(el => el === file);
     menu.open.clicked = (event) => this.openFile(event, file);
     if (file.directory === true) {
       menu.copyUrl.disabled = true;
@@ -86,12 +149,20 @@ class Filemanager extends Component {
     if (file.directory === false) {
       menu.copyUrl.disabled = false;
       menu.copyUrl.clicked = (event) => this.copyUrl(event, file);
+      menu.copy.disabled = false;
+      menu.copy.clicked = (event) => this.copyFiles(event, file);
+      menu.paste.disabled = true;
+      if (this.state.from.length > 0) {
+        menu.paste.disabled = false;
+        menu.paste.clicked = (event) => this.pasteFiles(event, file);
+      }
       menu.save.disabled = false;
       menu.save.clicked = (event) => this.saveFile(event, file);
       menu.delete.disabled = false;
       menu.delete.clicked = (event) => this.delete(event, file);
     }
     const coord = { left: event.pageX, top: event.pageY - 16 };
+    this.selectItem(event, file);
     this.setState({ openContext: true, contextCoord: coord, contextMenu: menu });
   }
 
@@ -103,11 +174,22 @@ class Filemanager extends Component {
   // select file or folder
   selectItem(event, item) {
     const ctrl = event.ctrlKey;
-    console.log(ctrl);
     const files = [...this.state.files];
-    let index = files.findIndex(el => el === item);
-    if (this.state.selected[0] === index) index = [];
-    this.setState({ selected: [index] });
+    const index = files.findIndex(el => el === item);
+    let selected = [...this.state.selected];
+
+    if (ctrl) {
+      const arrIndex = selected.indexOf(index);
+      if (arrIndex !== -1) selected.splice(arrIndex, 1);
+      else selected.push(index);
+    }
+
+    if (!ctrl) {
+      if (selected[0] === index) selected = [];
+      else selected = [index];
+    }
+
+    this.setState({ selected });
   }
 
   // open file or folder
@@ -118,6 +200,32 @@ class Filemanager extends Component {
       return;
     }
     console.log(event, file);
+  }
+
+  // copy files
+  copyFiles(event, file) {
+    const selected = [...this.state.selected].map(item => this.state.files[item]);
+    this.setState({ from: selected, selected: [] });
+  }
+
+  // paste files
+  pasteFiles(event, file) {
+    const copied = [...this.state.from];
+    const files = [...this.state.files];
+    const length = files.length;
+    const self = this;
+    copied.forEach(item => {
+      let index = files.findIndex(el => el.name === item.name && el.extension === item.extension);
+      if (index === -1) {
+        self.fetchData(
+          '/resources/api/resource/copy',
+          { to: self.state.path, from: item.path },
+        );
+        files.push(item);
+      }
+    });
+    if (files.length > length) this.setState({ files, from: [] });
+    else this.setState({ from: [] });
   }
 
   // upload files on server
@@ -178,9 +286,13 @@ class Filemanager extends Component {
     }
     // check valid symbols
     if (name.match(/^([- A-Za-zа-яА-ЯёЁ0-9_@]+)$/)) {
+      const data = { path: '/', name };
       const options = {
-        type: 'POST',
-        data: { path: '/', name },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify(data),
       };
       fetch('/resources/api/directory/create', options)
         .then(response => {
@@ -222,6 +334,7 @@ class Filemanager extends Component {
   render() {
     let dialog = null;
     let context = null;
+    let fancyBox = null;
 
     const { createFolder, openContext } = this.state;
 
@@ -240,20 +353,33 @@ class Filemanager extends Component {
       context = <ContextMenu menuList={this.state.contextMenu} coord={this.state.contextCoord}/>;
     }
 
+    if (this.state.openFancy === true) {
+      fancyBox = (
+        <FancyBox
+          files={this.state.files.filter(el=>!el.directory).map(file=>file.webPath)}
+          selected={this.state.opened}
+          close={()=>this.setState({ openFancy: false })}
+        />
+      );
+    }
+
     return (
       <div className={styles.Filemanager} onClick={this.contextMenuHide} >
         <FilemanagerControls
           createFolder={this.createFolderModal}
           upload={this.uploadFile}
+          path={this.state.path}
         />
         <Filelist
           files={this.state.files}
           select={this.selectItem}
           selected={this.state.selected}
           context={this.contextMenu}
+          fancy={this.dubleClickHandler}
         />
         {context}
         {dialog}
+        {fancyBox}
       </div>
     );
   }

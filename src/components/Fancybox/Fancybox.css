@@ -1,0 +1,68 @@
+.Fancybox {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  position: fixed;
+  padding: 32px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.FancyboxPopup {
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 1);
+  position: relative;
+  display: flex;
+  border-radius: 4px;
+  max-height: calc(100vh - 32px);
+  min-width: 280px;
+  z-index: 2;
+  box-shadow:
+    0 11px 15px -7px rgba(0, 0, 0, 0.2),
+    0 24px 38px 3px rgba(0, 0, 0, 0.14),
+    0 9px 46px 8px rgba(0, 0, 0, 0.12);
+}
+
+.FancyboxClose {
+  box-sizing: border-box;
+  cursor: pointer;
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  right: 0;
+}
+
+.FancyboxContent {
+  box-sizing: border-box;
+  display: flex;
+  border: 5px solid rgb(255, 255, 255);
+  border-top: 25px solid rgb(255, 255, 255);
+  width: 100%;
+}
+
+.FancyboxLeftArrow,
+.FancyboxRightArrow {
+  box-sizing: border-box;
+  position: absolute;
+  cursor: pointer;
+  top: calc(50% - 32px);
+  width: 64px;
+  height: 64px;
+}
+
+.FancyboxLeftArrow {
+  left: 5px;
+}
+
+.FancyboxRightArrow {
+  right: 5px;
+}
+
+.FancyboxLeftArrow:hover,
+.FancyboxRightArrow:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}

@@ -21,6 +21,7 @@ class Filelist extends Component {
           select={this.props.select}
           selected={this.props.selected}
           context={this.props.context}
+          fancy={this.props.fancy}
         />
       </table>
     );

@@ -12,6 +12,7 @@ const FilelistRow = (props) => {
   const file = props.file;
   const selectRow = (event) => props.select(event, file);
   const contextMenu = (event) => props.context(event, file);
+  const fancyBox = (event) => props.fancy(event, file);
   const classes = [styles.Filelist_Row];
   if (props.selected) classes.push(styles.selected);
   let icon = <FileRegular width='16px' height='16px' />;
@@ -20,7 +21,12 @@ const FilelistRow = (props) => {
   if (file.mimeType && file.mimeType === 'application/pdf') icon = <FilePdf width='16px' height='16px' />;
 
   return (
-    <tr className={classes.join(' ')} onClick={selectRow} onContextMenu={contextMenu}>
+    <tr
+      className={classes.join(' ')}
+      onClick={selectRow}
+      onContextMenu={contextMenu}
+      onDoubleClick={fancyBox}
+    >
       <td className={styles.Filelist_Row_Cell}>
         <div className={file.directory === true ? styles.dir : styles.file}>
           {icon}

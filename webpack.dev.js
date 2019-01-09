@@ -4,7 +4,7 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const publicPath = '/';
-const dirs = require('./mocks/mock_dir');
+const serverConfig = require('./webpack.devServer');
 
 module.exports = {
   mode: 'development',
@@ -52,33 +52,7 @@ module.exports = {
   optimization: {
     usedExports: true,
   },
-  devServer: {
-    open: false,
-    contentBase: path.join(__dirname, 'public/'),
-    compress: true,
-    watchContentBase: true,
-    publicPath: '/',
-    quiet: true,
-    host: '0.0.0.0',
-    overlay: false,
-    historyApiFallback: {
-      // Paths with dots should still use the history fallback.
-      // See https://github.com/facebook/create-react-app/issues/387.
-      disableDotRule: true,
-    },
-    port: 3000,
-    hot: false,
-    hotOnly: false,
-    before: (app, server) => {
-      app.post('/resources/api/directory/metadata', (req, res) => {
-        console.log(req.body);
-        res.json(dirs);
-      });
-      app.post('/resources/api/directory/create', (req, res) => {
-        res.json({ code: 'OK' });
-      });
-    },
-  },
+  devServer: serverConfig,
   plugins: [
     new HtmlWebpackPlugin({
       inject: true,

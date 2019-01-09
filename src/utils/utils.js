@@ -1,7 +1,7 @@
 export const formatDate = (date) => {
-  if (!date instanceof Date) return '';
-
   const formatDate = new Date(date);
+  if (!formatDate instanceof Date || isNaN(formatDate.getTime())) return '';
+
   let year = formatDate.getFullYear();
   year = year < 10 ? '0' + year : year;
 
@@ -42,3 +42,12 @@ export const sortFiles = (files) => {
   const filesList = list.filter(el=>el.directory !== true).sort(sort);
   return dirs.concat(filesList);
 };
+
+export function clearSelection() {
+  if (document.selection && document.selection.empty) {
+    document.selection.empty();
+  } else if (window.getSelection) {
+    let sel = window.getSelection();
+    sel.removeAllRanges();
+  }
+}

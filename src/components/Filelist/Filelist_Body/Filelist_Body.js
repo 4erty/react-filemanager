@@ -8,6 +8,7 @@ const FilelistBody = ({
   select,
   selected,
   context,
+  fancy,
 }) => {
   let list = null;
   if (Array.isArray(files)) {
@@ -18,6 +19,7 @@ const FilelistBody = ({
         select={select}
         selected={selected.indexOf(index) !== -1}
         context={context}
+        fancy={fancy}
       />
     ));
   }
