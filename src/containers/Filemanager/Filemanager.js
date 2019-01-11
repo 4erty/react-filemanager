@@ -1,6 +1,15 @@
 import React, { Component } from 'react';
 import styles from './Filemanager.css';
-import { dirUrl, uploadUrl, contextMenu } from './config';
+import {
+  dirUrl,
+  uploadUrl,
+  createUrl,
+  copyUrl,
+  moveUrl,
+  deleteUrl,
+  zipUrl,
+  contextMenu,
+} from './config';
 import { sortFiles, clearSelection } from '../../utils/utils';
 
 import Filelist from '../../components/Filelist/Filelist';
@@ -8,6 +17,7 @@ import FilemanagerControls from '../../components/FilemanagerControls/Filemanage
 import Dialog from '../../components/UI/Dialog/Dialog';
 import ContextMenu from '../../components/UI/ContextMenu/ContextMenu';
 import FancyBox from '../../components/Fancybox/Fancybox';
+import Message from '../../components/UI/Message/Message';
 
 class Filemanager extends Component {
   constructor(props) {
@@ -25,6 +35,10 @@ class Filemanager extends Component {
      * @param {boolean} openFancy - open fancy slider
      * @param {number} opened - index of current file opend on fancy slider
      * @param {Array} from - array of indexes of copied files/folders
+     * @param {boolean} messageShown - show message
+     * @param {string} message - message text
+     * @param {number} timerId - timer Id to close message after timer interval
+     * @param {number} timerInterval - message text
      */
     super(props);
     // state
@@ -41,6 +55,10 @@ class Filemanager extends Component {
       openFancy: false,
       opened: -1,
       from: [],
+      messageShown: false,
+      message: '',
+      timerId: null,
+      timerInterval: 5000,
     };
     // methods
     this.fetchData = this.fetchData.bind(this);
@@ -58,6 +76,9 @@ class Filemanager extends Component {
     this.saveFile = this.saveFile.bind(this);
     this.copyUrl = this.copyUrl.bind(this);
     this.delete = this.delete.bind(this);
+    this.zipFiles = this.zipFiles.bind(this);
+    this.showMessage = this.showMessage.bind(this);
+    this.closeMessage = this.closeMessage.bind(this);
   }
 
   componentDidMount() {
@@ -88,28 +109,40 @@ class Filemanager extends Component {
         return response.json();
       })
       .then(json => {
-        if (typeof callback === 'function') callback(json);
+        if (typeof callback === 'function') {
+          callback(json);
+          return;
+        }
+        this.showMessage(JSON.stringify(json));
       })
       .catch(err => {
+        const message = err.comment ? err.comment : err.message;
+        this.showMessage(message);
         console.log(err);
       });
   }
 
-  // open fancy box
+  /**
+ * double click on file/folder handler.
+ * @param {Event} event - event object
+ * @param {object} file - file object.
+ */
   dubleClickHandler(event, file) {
-    // if clicked on directory
-    if (file.directory === true) {
-      console.log(file);
-      this.changeDir(file.path);
-    } else {
-      const opened = this.state.files.findIndex(el => file === el);
-      this.setState({ openFancy: true, opened });
-    }
+    // clear selection after mousedoen event
     clearSelection();
-    console.log(file);
+    // if clicked on folder
+    if (file.directory === true) {
+      this.changeDir(file.path);
+      return;
+    }
+    const opened = this.state.files.findIndex(el => file === el);
+    this.setState({ openFancy: true, opened });
   }
 
-  // change directory path
+  /**
+ * change current folder
+ * @param {string} path - relative path to folder
+ */
   changeDir(path) {
     const backDir = {
       path: this.state.path,
@@ -121,7 +154,7 @@ class Filemanager extends Component {
       this.setState({ files });
     };
 
-    this.setState({ path }, this.fetchData(
+    this.setState({ path, selected: [] }, this.fetchData(
       dirUrl,
       { path },
       callback,
@@ -136,22 +169,26 @@ class Filemanager extends Component {
   contextMenu(event, file) {
     event.preventDefault();
     const menu = { ...this.state.contextMenu };
-    const index = this.state.files.findIndex(el => el === file);
     menu.open.clicked = (event) => this.openFile(event, file);
     if (file.directory === true) {
+      menu.archive.disabled = false;
+      menu.archive.clicked = (event) => this.zipFiles(event, file);
       menu.copyUrl.disabled = true;
-      menu.copyUrl.clicked = (event) => this.copyUrl(event, file);
+      menu.copyUrl.clicked = () => {};
       menu.save.disabled = true;
-      menu.save.clicked = (event) => this.saveFile(event, file);
+      menu.save.clicked = () => {};
       menu.delete.disabled = false;
       menu.delete.clicked = (event) => this.delete(event, file);
     }
     if (file.directory === false) {
+      menu.archive.disabled = false;
+      menu.archive.clicked = (event) => this.zipFiles(event, file);
       menu.copyUrl.disabled = false;
       menu.copyUrl.clicked = (event) => this.copyUrl(event, file);
       menu.copy.disabled = false;
       menu.copy.clicked = (event) => this.copyFiles(event, file);
       menu.paste.disabled = true;
+      menu.paste.clicked = () => {};
       if (this.state.from.length > 0) {
         menu.paste.disabled = false;
         menu.paste.clicked = (event) => this.pasteFiles(event, file);
@@ -171,41 +208,53 @@ class Filemanager extends Component {
     this.setState({ openContext: false });
   }
 
-  // select file or folder
-  selectItem(event, item) {
+  /**
+   * select file or folder.
+   * @param {Event} event - event object
+   * @param {object} file - file object.
+   */
+  selectItem(event, file) {
     const ctrl = event.ctrlKey;
     const files = [...this.state.files];
-    const index = files.findIndex(el => el === item);
+    const index = files.findIndex(el => el === file);
     let selected = [...this.state.selected];
 
-    if (ctrl) {
+    if (ctrl || (event.type !== 'contextmenu' && selected.length > 0)) {
       const arrIndex = selected.indexOf(index);
-      if (arrIndex !== -1) selected.splice(arrIndex, 1);
+      if (arrIndex !== -1 && event.type !== 'contextmenu') selected.splice(arrIndex, 1);
       else selected.push(index);
     }
 
     if (!ctrl) {
-      if (selected[0] === index) selected = [];
+      if (selected[0] === index && event.type !== 'contextmenu') selected = [];
       else selected = [index];
     }
 
     this.setState({ selected });
   }
 
-  // open file or folder
+  /**
+   * open file/folder, if file - open file in new tab, if folder - change current folder
+   * @param {Event} event - event object
+   * @param {object} file - file object.
+   */
   openFile(event, file) {
     if (file.directory !== true) {
       const path = window.location.protocol + '//' + document.location.host + file.webPath;
       window.open(path, '_blank');
       return;
     }
-    console.log(event, file);
+    this.changeDir(file.path);
   }
 
   // copy files
   copyFiles(event, file) {
     const selected = [...this.state.selected].map(item => this.state.files[item]);
-    this.setState({ from: selected, selected: [] });
+    // const message = `Файл${selected.length > 1 ? 'ы' : ' ' + selected[0].name} успешно скопирован${selected.length > 1 ? 'ы' : ''}`;
+    this.setState({
+      from: selected,
+      selected: [],
+    });
   }
 
   // paste files
@@ -218,13 +267,13 @@ class Filemanager extends Component {
       let index = files.findIndex(el => el.name === item.name && el.extension === item.extension);
       if (index === -1) {
         self.fetchData(
-          '/resources/api/resource/copy',
+          copyUrl,
           { to: self.state.path, from: item.path },
         );
         files.push(item);
       }
     });
-    if (files.length > length) this.setState({ files, from: [] });
+    if (files.length > length) this.setState({ files: sortFiles(files), from: [] });
     else this.setState({ from: [] });
   }
 
@@ -237,8 +286,18 @@ class Filemanager extends Component {
       [...files].forEach(file => { form.append(dir, file); });
       fetch(uploadUrl, { method: 'POST', body: form })
         .then((response) => { return response.json(); })
-        .then(json => { console.log(json); })
-        .catch(err => { console.log(err); });
+        .then(json => {
+          if (json.code && json.code === 'OK') {
+            this.showMessage('Файлы успешно загружены на сервер');
+            return;
+          }
+          this.showMessage(json);
+        })
+        .catch(err => {
+          const message = err.comment ? err.comment : err.message;
+          this.showMessage(message);
+          console.log(err);
+        });
     }
   }
 
@@ -255,6 +314,26 @@ class Filemanager extends Component {
     document.body.removeChild(element);
   }
 
+  // archives files
+  zipFiles(event, file) {
+    const selected = [...this.state.selected];
+    const paths = selected.map(el => `path[]=${this.state.files[el].path}`);
+    const options = {
+      method: 'GET',
+    };
+    console.log(`${zipUrl}?${encodeURI(paths.join('&'))}`);
+    fetch(`${zipUrl}?${encodeURI(paths.join('&'))}`, options)
+      .then(response => {
+        return response.json();
+      })
+      .then(json => {
+        console.log(json);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }
+
   // copy file url
   copyUrl(event, file) {
     const tempInput = document.createElement('input');
@@ -264,11 +343,24 @@ class Filemanager extends Component {
     tempInput.select();
     document.execCommand('copy');
     document.body.removeChild(tempInput);
+    this.showMessage('Ссылка на файл скопирована');
   }
 
   // delete file ot folder from server
   delete(event, file) {
-    console.log(event, file);
+    const selected = [...this.state.selected];
+    const files = [...this.state.files];
+    const self = this;
+    selected.forEach(item => {
+      const path = files[item];
+      self.fetchData(
+        deleteUrl,
+        { path: path.path },
+        () => { this.showMessage('Удаление завершено'); },
+      );
+      files.splice(item, 1);
+    });
+    this.setState({ files: sortFiles(files), selected: [] });
   }
 
   // open Dialog for enter folder name
@@ -294,7 +386,7 @@ class Filemanager extends Component {
         method: 'POST',
         body: JSON.stringify(data),
       };
-      fetch('/resources/api/directory/create', options)
+      fetch(createUrl, options)
         .then(response => {
           return response.json();
         })
@@ -331,10 +423,21 @@ class Filemanager extends Component {
     });
   }
 
+  // show message
+  showMessage(message) {
+    this.setState({ message, messageShown: true });
+  }
+
+  // close message
+  closeMessage() {
+    this.setState({ message: '', messageShown: false });
+  }
+
   render() {
     let dialog = null;
     let context = null;
     let fancyBox = null;
+    let message = null;
 
     const { createFolder, openContext } = this.state;
 
@@ -363,10 +466,16 @@ class Filemanager extends Component {
       );
     }
 
+    if (this.state.messageShown === true) {
+      message = <Message message={this.state.message} close={this.closeMessage}/>;
+    }
+
     return (
       <div className={styles.Filemanager} onClick={this.contextMenuHide} >
         <FilemanagerControls
           createFolder={this.createFolderModal}
+          pasteFiles={this.pasteFiles}
+          pasteDisable={this.state.from.length === 0}
           upload={this.uploadFile}
           path={this.state.path}
         />
@@ -380,6 +489,7 @@ class Filemanager extends Component {
         {context}
         {dialog}
         {fancyBox}
+        {message}
       </div>
     );
   }

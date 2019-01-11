@@ -39,6 +39,7 @@ module.exports = {
     // copy
     app.all('/resources/api/resource/copy', (req, res) => {
       res.json({ code: 'OK' });
+      console.log(req.body);
     });
 
     // move

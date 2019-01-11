@@ -12,16 +12,20 @@ const FilelistBody = ({
 }) => {
   let list = null;
   if (Array.isArray(files)) {
-    list = files.map((file, index) => (
-      <FilelistRow
-        key={index}
-        file={file}
-        select={select}
-        selected={selected.indexOf(index) !== -1}
-        context={context}
-        fancy={fancy}
-      />
-    ));
+    list = files.map((file, index) => {
+      const key = file.directory ? file.name : file.name + '_' + file.extension;
+
+      return (
+        <FilelistRow
+          key={key}
+          file={file}
+          select={select}
+          selected={selected.indexOf(index) !== -1}
+          context={context}
+          fancy={fancy}
+        />
+      );
+    });
   }
 
   return <tbody className={style.Filelist_Body}>{list}</tbody>;

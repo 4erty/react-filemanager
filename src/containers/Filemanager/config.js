@@ -1,5 +1,10 @@
 export const dirUrl = '/resources/api/directory/metadata';
 export const uploadUrl = '/resources/api/resource/upload';
+export const createUrl = '/resources/api/directory/create';
+export const copyUrl = '/resources/api/resource/copy';
+export const moveUrl = '/resources/api/resource/move';
+export const deleteUrl = '/resources/api/resource/delete';
+export const zipUrl = '/resources/api/resource/zip';
 
 export const contextMenu = {
   open: {

@@ -1,10 +1,5 @@
 .ContextMenuItem {
-  cursor: pointer;
-
   display: block;
-  font-size: 12px;
-  font-family: Arial, Helvetica, sans-serif;
-  padding: 6px 18px;
 }
 
 .ContextMenuItem:hover {
@@ -12,6 +7,11 @@
 }
 
 .ContextMenuLink {
+  cursor: pointer;
+  display: block;
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 6px 18px;
   color: rgba(0, 0, 0, 0.87);
 }
 

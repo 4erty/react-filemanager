@@ -1,0 +1,32 @@
+.Message {
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 11px 15px -7px rgba(0,0,0,.2), 0 24px 38px 3px rgba(0,0,0,.14), 0 9px 46px 8px rgba(0,0,0,.12);
+  display: flex;
+  position: fixed;
+  right: 12px;
+}
+
+.MessageText {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-family: Arial Helvetica sans-serif;
+  color: rgba(0, 0, 0, 0.87);
+  user-select: none;
+}
+
+.MessageClose {
+  border: none;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+  background-color: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.MessageClose:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
