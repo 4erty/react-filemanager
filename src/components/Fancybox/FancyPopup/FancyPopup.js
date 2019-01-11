@@ -6,7 +6,7 @@ const FancyPopup = ({ path }) => {
   let popup;
   let width = window.innerWidth - window.innerWidth * 0.2;
   if (Array.isArray(ext)) {
-    switch (ext[0]) {
+    switch (ext[0].toLowerCase()) {
       case 'jpg':
       case 'png':
       case 'svg':

@@ -1,5 +1,7 @@
 .Filemanager {
   display: flex;
   flex-direction: column;
+  padding-left: 3px;
+  padding-right: 3px;
   width: 100%;
 }

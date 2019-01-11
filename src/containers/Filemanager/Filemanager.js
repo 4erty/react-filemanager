@@ -53,7 +53,7 @@ class Filemanager extends Component {
       contextMenu: contextMenu,
       contextCoord: {},
       openFancy: false,
-      opened: -1,
+      opened: '',
       from: [],
       messageShown: false,
       message: '',
@@ -62,7 +62,7 @@ class Filemanager extends Component {
     };
     // methods
     this.fetchData = this.fetchData.bind(this);
-    this.dubleClickHandler = this.dubleClickHandler.bind(this);
+    this.doubleClickHandler = this.doubleClickHandler.bind(this);
     this.contextMenu = this.contextMenu.bind(this);
     this.selectItem = this.selectItem.bind(this);
     this.createFolderModal = this.createFolderModal.bind(this);
@@ -96,12 +96,18 @@ class Filemanager extends Component {
    * @param {function} callback - callback after parse request
    */
   fetchData(url, data, callback) {
+    let sendData = [];
+    const keys = Object.keys(data);
+    keys.forEach(key => {
+      sendData.push(`${key}=${data[key]}`);
+    });
+
     const options = {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       method: 'POST',
-      body: JSON.stringify(data),
+      body: encodeURI(sendData.join('&')),
     };
 
     fetch(url, options)
@@ -127,7 +133,7 @@ class Filemanager extends Component {
  * @param {Event} event - event object
  * @param {object} file - file object.
  */
-  dubleClickHandler(event, file) {
+  doubleClickHandler(event, file) {
     // clear selection after mousedoen event
     clearSelection();
     // if clicked on folder
@@ -135,7 +141,7 @@ class Filemanager extends Component {
       this.changeDir(file.path);
       return;
     }
-    const opened = this.state.files.findIndex(el => file === el);
+    const opened = file.webPath;
     this.setState({ openFancy: true, opened });
   }
 
@@ -268,7 +274,8 @@ class Filemanager extends Component {
       if (index === -1) {
         self.fetchData(
           copyUrl,
-          { to: self.state.path, from: item.path },
+          { to: `${self.state.path}/${item.name}.${item.extension}`, from: item.path },
+          () => {},
         );
         files.push(item);
       }
@@ -283,6 +290,7 @@ class Filemanager extends Component {
     if (files instanceof FileList) {
       const form = new FormData();
       const dir = files.length > 1 ? 'files[]' : 'file';
+      form.append('path', this.state.path);
       [...files].forEach(file => { form.append(dir, file); });
       fetch(uploadUrl, { method: 'POST', body: form })
         .then((response) => { return response.json(); })
@@ -321,7 +329,7 @@ class Filemanager extends Component {
     const options = {
       method: 'GET',
     };
-    console.log(`${zipUrl}?${encodeURI(paths.join('&'))}`);
+
     fetch(`${zipUrl}?${encodeURI(paths.join('&'))}`, options)
       .then(response => {
         return response.json();
@@ -379,40 +387,23 @@ class Filemanager extends Component {
     // check valid symbols
     if (name.match(/^([- A-Za-zа-яА-ЯёЁ0-9_@]+)$/)) {
       const data = { path: '/', name };
-      const options = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-        body: JSON.stringify(data),
-      };
-      fetch(createUrl, options)
-        .then(response => {
-          return response.json();
-        })
-        .then(res => {
-          if (res.code !== 'OK') {
-            this.setState({ error: res.error });
-            return;
-          }
-          let files = [...this.state.files];
-          files.push({
-            path: `/${name}`,
-            webPath: `/resources/upload/${name}`,
-            name,
-            extension: '',
-            created: new Date(),
-            modified: new Date(),
-            size: 4096,
-            directory: true,
-          });
-          this.setState({ files, createFolder: false });
-        })
-        .catch(err => {
-          console.log(err.message);
-          this.setState({ error: res.error });
+      this.fetchData(createUrl, data, () => {
+        let files = [...this.state.files];
+        files.push({
+          path: `/${name}`,
+          webPath: `/resources/upload/${name}`,
+          name,
+          extension: '',
+          created: new Date(),
+          modified: new Date(),
+          size: 4096,
+          directory: true,
         });
+        this.setState({ files, createFolder: false });
+      });
+      return;
     }
+    this.showMessage('Не корректное имя каталога');
   }
 
   // close dialog
@@ -457,10 +448,12 @@ class Filemanager extends Component {
     }
 
     if (this.state.openFancy === true) {
+      const fancyFiles = this.state.files.filter(el=>!el.directory).map(file=>file.webPath);
+      const selected = fancyFiles.findIndex(el => el === this.state.opened);
       fancyBox = (
         <FancyBox
-          files={this.state.files.filter(el=>!el.directory).map(file=>file.webPath)}
-          selected={this.state.opened}
+          files={fancyFiles}
+          selected={selected}
           close={()=>this.setState({ openFancy: false })}
         />
       );
@@ -484,7 +477,7 @@ class Filemanager extends Component {
           select={this.selectItem}
           selected={this.state.selected}
           context={this.contextMenu}
-          fancy={this.dubleClickHandler}
+          fancy={this.doubleClickHandler}
         />
         {context}
         {dialog}

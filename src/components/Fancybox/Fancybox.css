@@ -2,7 +2,7 @@
   box-sizing: border-box;
   display: flex;
   justify-content: center;
-  align-content: center;
+  align-items: center;
   position: fixed;
   padding: 32px;
   top: 0;
@@ -17,8 +17,10 @@
   position: relative;
   display: flex;
   border-radius: 4px;
+  max-width: 80vw;
   max-height: calc(100vh - 32px);
-  min-width: 280px;
+  min-width: 50vw;
+  min-height: 50vh;
   z-index: 2;
   box-shadow:
     0 11px 15px -7px rgba(0, 0, 0, 0.2),
@@ -39,8 +41,11 @@
 .FancyboxContent {
   box-sizing: border-box;
   display: flex;
+  justify-content: center;
+  align-items: center;
   border: 5px solid rgb(255, 255, 255);
   border-top: 25px solid rgb(255, 255, 255);
+  border-radius: 4px;
   width: 100%;
 }
 
