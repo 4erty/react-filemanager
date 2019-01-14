@@ -23,6 +23,7 @@ module.exports = {
   hotOnly: false,
   before: (app, server) => {
     app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded({ extended: true }));
 
     // get files
     app.all('/resources/api/directory/metadata', (req, res) => {
