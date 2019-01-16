@@ -44,6 +44,14 @@ module.exports = {
               localIdentName: '[name]__[local]--[hash:base64:5]',
             },
           },
+          {
+            loader: 'postcss-loader',
+            options: {
+              plugins: () => [require('autoprefixer')({
+                browsers: ['> 1%', 'last 2 versions'],
+              })],
+            },
+          },
         ],
       },
     ],

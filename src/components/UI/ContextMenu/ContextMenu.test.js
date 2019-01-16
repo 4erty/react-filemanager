@@ -50,6 +50,15 @@ describe('<ContextMenu />', () => {
     wrapper = shallow(<ContextMenu />);
   });
 
+  it('should render correctly with no props', () => {
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should render correctly with no props', () => {
+    wrapper.setProps({ menuList: contextMenu });
+    expect(wrapper).toMatchSnapshot();
+  });
+
   it('<ContextMenu /> rendered and contain tag <ul>', () => {
     expect(wrapper.find('ul')).toHaveLength(1);
   });

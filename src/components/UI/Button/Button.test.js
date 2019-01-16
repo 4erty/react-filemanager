@@ -12,7 +12,16 @@ describe('<Button />', () => {
     wrapper = shallow(<Button />);
   });
 
-  it('<Button /> contains tag button', () => {
+  it('should render correctly with no props', () => {
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should render correctly with props', () => {
+    wrapper.setProps({ disable: true, children: 'test' });
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it('contains tag button', () => {
     expect(wrapper.find('button')).toHaveLength(1);
   });
 
