@@ -18,6 +18,7 @@ import Dialog from '../../components/UI/Dialog/Dialog';
 import ContextMenu from '../../components/UI/ContextMenu/ContextMenu';
 import FancyBox from '../../components/Fancybox/Fancybox';
 import Message from '../../components/UI/Message/Message';
+import ProgressBar from '../../components/UI/ProgressBar/ProgressBar';
 
 class Filemanager extends Component {
   constructor(props) {
@@ -59,6 +60,8 @@ class Filemanager extends Component {
       message: '',
       timerId: null,
       timerInterval: 5000,
+      upload: false,
+      uploadProgress: 0,
     };
     // methods
     this.fetchData = this.fetchData.bind(this);
@@ -288,24 +291,40 @@ class Filemanager extends Component {
   uploadFile(event) {
     const files = event.target.files;
     if (files instanceof FileList) {
+      this.setState({ upload: true });
+      const xhr = new XMLHttpRequest();
       const form = new FormData();
       const dir = files.length > 1 ? 'files[]' : 'file';
       form.append('path', this.state.path);
       [...files].forEach(file => { form.append(dir, file); });
-      fetch(uploadUrl, { method: 'POST', body: form })
-        .then((response) => { return response.json(); })
-        .then(json => {
-          if (json.code && json.code === 'OK') {
-            this.showMessage('Файлы успешно загружены на сервер');
-            return;
-          }
-          this.showMessage(json);
-        })
-        .catch(err => {
-          const message = err.comment ? err.comment : err.message;
-          this.showMessage(message);
-          console.log(err);
+      xhr.open('POST', uploadUrl, true);
+      xhr.send(form);
+
+      xhr.addEventListener('progress', (event) => {
+        let progress = Math.round(1000 * event.loaded / event.total) / 10;
+        this.setState({ uploadProgress: progress });
+      });
+
+      xhr.addEventListener('load', () => {
+        this.setState({ upload: false }, () => {
+          this.showMessage('Файлы успешно загружены на сервер');
         });
+      });
+
+      // fetch(uploadUrl, { method: 'POST', body: form })
+      //   .then((response) => { return response.json(); })
+      //   .then(json => {
+      //     if (json.code && json.code === 'OK') {
+      //       this.showMessage('Файлы успешно загружены на сервер');
+      //       return;
+      //     }
+      //     this.showMessage(json);
+      //   })
+      //   .catch(err => {
+      //     const message = err.comment ? err.comment : err.message;
+      //     this.showMessage(message);
+      //     console.log(err);
+      //   });
     }
   }
 
@@ -429,6 +448,7 @@ class Filemanager extends Component {
     let context = null;
     let fancyBox = null;
     let message = null;
+    let upload = null;
 
     const { createFolder, openContext } = this.state;
 
@@ -463,6 +483,10 @@ class Filemanager extends Component {
       message = <Message message={this.state.message} close={this.closeMessage}/>;
     }
 
+    if (this.state.upload === true) {
+      upload = <ProgressBar width = {this.state.uploadProgress} />;
+    }
+
     return (
       <div className={styles.Filemanager} onClick={this.contextMenuHide} >
         <FilemanagerControls
@@ -479,6 +503,7 @@ class Filemanager extends Component {
           context={this.contextMenu}
           fancy={this.doubleClickHandler}
         />
+        {upload}
         {context}
         {dialog}
         {fancyBox}
